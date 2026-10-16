@@ -1,18 +1,18 @@
 
-export type Transaction = {
-  id: number
-  title: string
-  category: string
-  date: string
-  amount: number
-  type: 'income' | 'expense'
-}
+import TransactionItem from './TransactionItem'
+import type { Transaction } from '../types/transaction'
 
 type TransactionListProps = {
   transactions: Transaction[]
+  onEdit: (transaction: Transaction) => void
+  onDelete: (id: number) => void
 }
 
-function TransactionList({ transactions }: TransactionListProps) {
+function TransactionList({
+  transactions,
+  onEdit,
+  onDelete,
+}: TransactionListProps) {
   return (
     <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
       <div className="mb-5 flex items-center justify-between">
@@ -26,35 +26,17 @@ function TransactionList({ transactions }: TransactionListProps) {
 
       {transactions.length === 0 ? (
         <p className="py-8 text-center text-gray-500">
-          No transactions yet.
+          No transactions yet. Add your first transaction above.
         </p>
       ) : (
         <div className="divide-y divide-gray-100">
           {transactions.map((transaction) => (
-            <div
+            <TransactionItem
               key={transaction.id}
-              className="flex items-center justify-between gap-3 py-4"
-            >
-              <div className="min-w-0">
-                <p className="truncate font-semibold text-gray-800">
-                  {transaction.title}
-                </p>
-                <p className="mt-1 text-sm text-gray-500">
-                  {transaction.category} · {transaction.date}
-                </p>
-              </div>
-
-              <p
-                className={`shrink-0 font-bold ${
-                  transaction.type === 'income'
-                    ? 'text-green-600'
-                    : 'text-red-500'
-                }`}
-              >
-                {transaction.type === 'income' ? '+' : '-'}
-                {transaction.amount.toLocaleString()} AFN
-              </p>
-            </div>
+              transaction={transaction}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
           ))}
         </div>
       )}
