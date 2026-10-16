@@ -1,26 +1,32 @@
 
-function Header() {
+interface HeaderProps {
+  onAddTransaction: () => void;
+}
+
+export default function Header({
+  onAddTransaction,
+}: HeaderProps) {
   return (
-    <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Dashboard
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-600">
+          Personal finance
+        </p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          SpendSmart
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Welcome back! Here's your financial overview.
+        <p className="mt-2 text-slate-500">
+          Make every dollar count.
         </p>
       </div>
 
-      <div className="flex items-center gap-3">
-        <span className="rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-700">
-          My Finances
-        </span>
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-600 font-bold text-white">
-          S
-        </div>
-      </div>
+      <button
+        type="button"
+        onClick={onAddTransaction}
+        className="rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white shadow-lg shadow-violet-200 transition hover:bg-violet-700"
+      >
+        + Add transaction
+      </button>
     </header>
-  )
+  );
 }
-
-export default Header

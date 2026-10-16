@@ -1,11 +1,20 @@
 
-export type TransactionType = 'income' | 'expense'
+export type TransactionType = "income" | "expense";
+export type TransactionFilter = "all" | TransactionType;
 
-export type Transaction = {
-  id: number
-  title: string
-  category: string
-  date: string
-  amount: number
-  type: TransactionType
+export interface Transaction {
+  id: string;
+  title: string;
+  amount: number;
+  type: TransactionType;
+  category: string;
+  date: string;
+}
+
+export interface TransactionInput {
+  title: string;
+  amount: number;
+  type: TransactionType;
+  category: string;
+  date: string;
 }

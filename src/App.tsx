@@ -1,91 +1,163 @@
 
-import { useState } from 'react'
-import Header from './components/Header'
-import SummaryCard from './components/SummaryCard'
-import TransactionForm from './components/TransactionForm'
-import TransactionList from './components/TransactionList'
-import { useTransactions } from './hooks/useTransactions'
-import type { Transaction } from './types/transaction'
+import { useCallback, useMemo, useState } from "react";
+import Header from "./components/Header";
+import SummaryCard from "./components/SummaryCard";
+import TransactionForm from "./components/TransactionForm";
+import TransactionList from "./components/TransactionList";
+import BudgetCard from "./components/BudgetCard";
+import SpendingBreakdown from "./components/SpendingBreakdown";
+import { useTransactions } from "./hooks/useTransactions";
+import { useBudget } from "./hooks/useBudget";
+import type {
+  Transaction,
+  TransactionInput,
+} from "./types/transaction";
+import {
+  calculateBalance,
+  calculateTotals,
+  getCurrentMonthTransactions,
+} from "./utils/calculations";
 
-function App() {
+export default function App() {
   const {
     transactions,
     addTransaction,
-    updateTransaction,
+    editTransaction,
     deleteTransaction,
-  } = useTransactions()
+  } = useTransactions();
+
+  const { budget, updateBudget } = useBudget();
 
   const [editingTransaction, setEditingTransaction] =
-    useState<Transaction | null>(null)
+    useState<Transaction | null>(null);
 
-  const income = transactions
-    .filter((item) => item.type === 'income')
-    .reduce((total, item) => total + item.amount, 0)
+  const totals = useMemo(
+    () => calculateTotals(transactions),
+    [transactions],
+  );
 
-  const expenses = transactions
-    .filter((item) => item.type === 'expense')
-    .reduce((total, item) => total + item.amount, 0)
+  const balance = useMemo(
+    () => calculateBalance(totals.income, totals.expenses),
+    [totals],
+  );
 
-  const balance = income - expenses
+  const currentMonthTransactions = useMemo(
+    () => getCurrentMonthTransactions(transactions),
+    [transactions],
+  );
 
-  function handleDelete(id: number) {
-    deleteTransaction(id)
+  const currentMonthTotals = useMemo(
+    () => calculateTotals(currentMonthTransactions),
+    [currentMonthTransactions],
+  );
 
-    if (editingTransaction?.id === id) {
-      setEditingTransaction(null)
-    }
-  }
+  const handleSubmit = useCallback(
+    (input: TransactionInput) => {
+      if (editingTransaction) {
+        editTransaction(editingTransaction.id, input);
+        setEditingTransaction(null);
+      } else {
+        addTransaction(input);
+      }
+    },
+    [editingTransaction, addTransaction, editTransaction],
+  );
+
+  const handleEdit = useCallback((transaction: Transaction) => {
+    setEditingTransaction(transaction);
+
+    document
+      .getElementById("transaction-form")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingTransaction(null);
+  }, []);
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      deleteTransaction(id);
+
+      if (editingTransaction?.id === id) {
+        setEditingTransaction(null);
+      }
+    },
+    [deleteTransaction, editingTransaction],
+  );
+
+  const handleAddTransaction = useCallback(() => {
+    setEditingTransaction(null);
+
+    document
+      .getElementById("transaction-form")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   return (
-    <main className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-10">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <Header />
+    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-7xl">
+        <Header onAddTransaction={handleAddTransaction} />
 
-        <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <section
+          aria-label="Financial summary"
+          className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        >
           <SummaryCard
-            title="Total Balance"
-            amount={`${balance.toLocaleString()} AFN`}
+            title="Total balance"
+            amount={balance}
             description="Income minus expenses"
             icon="💰"
-            color="bg-purple-100"
+            color="violet"
           />
 
           <SummaryCard
-            title="Total Income"
-            amount={`${income.toLocaleString()} AFN`}
-            description="Income from all transactions"
-            icon="📈"
-            color="bg-green-100"
+            title="Total income"
+            amount={totals.income}
+            description="All recorded income"
+            icon="↙"
+            color="green"
           />
 
           <SummaryCard
-            title="Total Expenses"
-            amount={`${expenses.toLocaleString()} AFN`}
-            description="Spending from all transactions"
-            icon="💳"
-            color="bg-red-100"
+            title="Total expenses"
+            amount={totals.expenses}
+            description="All recorded expenses"
+            icon="↗"
+            color="red"
           />
         </section>
 
-        <TransactionForm
-          editingTransaction={editingTransaction}
-          onAdd={addTransaction}
-          onUpdate={updateTransaction}
-          onCancel={() => setEditingTransaction(null)}
-        />
+        <section className="mb-8 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <TransactionForm
+            editingTransaction={editingTransaction}
+            onSubmit={handleSubmit}
+            onCancelEdit={handleCancelEdit}
+          />
+
+          <div className="grid content-start gap-6">
+            <BudgetCard
+              budget={budget}
+              spent={currentMonthTotals.expenses}
+              onUpdateBudget={updateBudget}
+            />
+
+            <SpendingBreakdown
+              transactions={currentMonthTransactions}
+            />
+          </div>
+        </section>
 
         <TransactionList
           transactions={transactions}
-          onEdit={setEditingTransaction}
+          onEdit={handleEdit}
           onDelete={handleDelete}
         />
 
-        <footer className="pb-4 text-center text-sm text-gray-400">
-          © 2026 SpendSmart · Manage your money wisely
+        <footer className="py-8 text-center text-sm text-slate-500">
+          © {new Date().getFullYear()} SpendSmart. Manage your money wisely.
         </footer>
       </div>
     </main>
-  )
+  );
 }
-
-export default App

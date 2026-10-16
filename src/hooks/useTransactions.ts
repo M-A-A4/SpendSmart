@@ -1,75 +1,55 @@
 
-import type { Transaction } from '../types/transaction'
-import { useLocalStorage } from './useLocalStorage'
-
-const initialTransactions: Transaction[] = [
-  {
-    id: 1,
-    title: 'Monthly Salary',
-    category: 'Salary',
-    date: '2026-10-15',
-    amount: 45000,
-    type: 'income',
-  },
-  {
-    id: 2,
-    title: 'Grocery Shopping',
-    category: 'Food',
-    date: '2026-10-14',
-    amount: 2500,
-    type: 'expense',
-  },
-  {
-    id: 3,
-    title: 'Internet Bill',
-    category: 'Utilities',
-    date: '2026-10-12',
-    amount: 1200,
-    type: 'expense',
-  },
-  {
-    id: 4,
-    title: 'Freelance Work',
-    category: 'Freelance',
-    date: '2026-10-10',
-    amount: 8000,
-    type: 'income',
-  },
-]
+import { useCallback } from "react";
+import { useLocalStorage } from "./useLocalStorage";
+import type {
+  Transaction,
+  TransactionInput,
+} from "../types/transaction";
 
 export function useTransactions() {
   const [transactions, setTransactions] = useLocalStorage<Transaction[]>(
-    'spendsmart-transactions',
-    initialTransactions,
-  )
+    "spendsmart-transactions",
+    [],
+  );
 
-  function addTransaction(data: Omit<Transaction, 'id'>) {
-    const newTransaction: Transaction = {
-      ...data,
-      id: Date.now(),
-    }
+  const addTransaction = useCallback(
+    (input: TransactionInput) => {
+      const newTransaction: Transaction = {
+        ...input,
+        id: crypto.randomUUID(),
+      };
 
-    setTransactions((previous) => [newTransaction, ...previous])
-  }
+      setTransactions((current) => [newTransaction, ...current]);
+    },
+    [setTransactions],
+  );
 
-  function updateTransaction(updated: Transaction) {
-    setTransactions((previous) =>
-      previous.map((transaction) =>
-        transaction.id === updated.id ? updated : transaction,
-      ),
-    )
-  }
+  const editTransaction = useCallback(
+    (id: string, input: TransactionInput) => {
+      setTransactions((current) =>
+        current.map((transaction) =>
+          transaction.id === id
+            ? { ...input, id }
+            : transaction,
+        ),
+      );
+    },
+    [setTransactions],
+  );
 
-  function deleteTransaction(id: number) {
-    setTransactions((previous) =>
-      previous.filter((transaction) => transaction.id !== id),
-    )
-  }
+  const deleteTransaction = useCallback(
+    (id: string) => {
+      setTransactions((current) =>
+        current.filter((transaction) => transaction.id !== id),
+      );
+    },
+    [setTransactions],
+  );
 
   return {
     transactions,
     addTransaction,
-    updateTransaction,
+    editTransaction,
     deleteTransaction,
-  }
+  };
 }
