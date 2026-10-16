@@ -1,6 +1,6 @@
 
-import { useState } from 'react'
 import type { Transaction } from '../types/transaction'
+import { useLocalStorage } from './useLocalStorage'
 
 const initialTransactions: Transaction[] = [
   {
@@ -38,8 +38,10 @@ const initialTransactions: Transaction[] = [
 ]
 
 export function useTransactions() {
-  const [transactions, setTransactions] =
-    useState<Transaction[]>(initialTransactions)
+  const [transactions, setTransactions] = useLocalStorage<Transaction[]>(
+    'spendsmart-transactions',
+    initialTransactions,
+  )
 
   function addTransaction(data: Omit<Transaction, 'id'>) {
     const newTransaction: Transaction = {
